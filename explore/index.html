@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Qur'an Reflection Viewer</title>
 
+<!-- Favicon/Icon -->
+<link rel="icon" type="image/png" href="../icon.png">
+
 <!-- Qur'anic Arabic Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Scheherazade+New:wght@400;600&display=swap" rel="stylesheet">
+
 <style>
         /* Disable text selection */
         body {
@@ -15,55 +19,38 @@
             -moz-user-select: none;
             -ms-user-select: none;
         }
-    </style>
-    <script>
-        // Disable Right Click
-        document.addEventListener("contextmenu", function (e) {
-            e.preventDefault();
-        });
+</style>
 
-        // Disable Copy, Cut, and Paste
-        document.addEventListener("copy", function (e) {
-            e.preventDefault();
-        });
-        document.addEventListener("cut", function (e) {
-            e.preventDefault();
-        });
-        document.addEventListener("paste", function (e) {
-            e.preventDefault();
-        });
+<script>
+    // Disable Right Click, Copy, Cut, Paste
+    document.addEventListener("contextmenu", e => e.preventDefault());
+    ["copy","cut","paste"].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
 
-        // Block Developer Tools (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
-        document.addEventListener("keydown", function (e) {
-            if (
-                e.key === "F12" ||
-                (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J")) ||
-                (e.ctrlKey && e.key === "U")
-            ) {
-                e.preventDefault();
+    // Block Developer Tools
+    document.addEventListener("keydown", function (e) {
+        if (
+            e.key === "F12" ||
+            (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J")) ||
+            (e.ctrlKey && e.key === "U")
+        ) e.preventDefault();
+    });
+
+    (function detectDevTools() {
+        setInterval(() => {
+            if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) {
+                console.clear();
+                alert("Developer tools detected! Please close them.");
+                window.location.reload();
             }
-        });
+        }, 1000);
+    })();
 
-        // Detect DevTools Open (Debugger Trick)
-        (function () {
-            function detectDevTools() {
-                if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) {
-                    console.clear();
-                    alert("Developer tools detected! Please close them.");
-                    window.location.reload(); // Refresh page
-                }
-            }
-            setInterval(detectDevTools, 1000);
-        })();
+    function blockDebugger() {
+        setInterval(() => { debugger; }, 50);
+    }
+    blockDebugger();
+</script>
 
-        // Pause Execution in Debugger (Harder to Bypass)
-        function blockDebugger() {
-            setInterval(function () {
-                debugger;
-            }, 50);
-        }
-        blockDebugger();
-    </script>
 <style>
   body {
     font-family: "Segoe UI", Roboto, sans-serif;
@@ -75,7 +62,6 @@
 
   a { text-decoration: none; color: inherit; }
 
-  /* ===== HEADER ===== */
   header.site-header {
     background: linear-gradient(135deg, #ffffff, #f4fff7);
     padding: 25px 20px;
@@ -97,7 +83,6 @@
     opacity: 0.85;
   }
 
-  /* ===== FOOTER ===== */
   footer.site-footer {
     text-align: center;
     padding: 25px 10px;
@@ -115,7 +100,6 @@
 
   footer.site-footer a:hover { text-decoration: underline; }
 
-  /* ===== CONTAINER ===== */
   .container {
     max-width: 800px;
     margin: 30px auto;
@@ -191,11 +175,35 @@
     transition: 0.3s;
   }
   .similar a:hover { background-color: #e64a19; }
+
+  /* Go To Inputs */
+  .goto-verse {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+  .goto-verse input {
+    width: 80px;
+    padding: 8px 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    text-align: center;
+  }
+  .goto-verse button {
+    padding: 8px 16px;
+    background-color: #00796b;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .goto-verse button:hover { background-color: #005f56; }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="site-header" style="padding: 15px 20px;">
   <h1 style="font-size: 1.5rem; margin: 0; color: #17653a;">Ayah Qur’an Viewer</h1>
   <p style="font-size: 0.85rem; margin: 5px 0 0 0; color: #355e3b; opacity: 0.85;">
@@ -243,9 +251,16 @@
     <button id="home-btn">🏠 Home</button>
     <button id="next-btn">Next ›</button>
   </div>
+
+  <!-- Go To Verse -->
+  <div class="goto-verse">
+    <input type="number" id="surah-input" placeholder="Surah #" min="1">
+    <input type="number" id="verse-input" placeholder="Verse #" min="1">
+    <button id="goto-btn">Go To</button>
+  </div>
+
 </div>
 
-<!-- FOOTER -->
 <footer class="site-footer">
   <p>Contact us:</p>
   <p>
@@ -317,6 +332,14 @@ document.getElementById("next-btn").onclick = async () => {
 };
 
 document.getElementById("home-btn").onclick = () => loadVerse(1, 1);
+
+// Go To verse button
+document.getElementById("goto-btn").onclick = () => {
+  const s = parseInt(document.getElementById("surah-input").value);
+  const v = parseInt(document.getElementById("verse-input").value);
+  if (!isNaN(s) && !isNaN(v)) loadVerse(s, v);
+  else alert("Please enter valid Surah and Verse numbers.");
+};
 
 // Initial load
 loadVerse(1, 1);
