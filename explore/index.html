@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qur'an Reflection Viewer</title>
+
+<!-- Qur'anic Arabic Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Amiri&family=Scheherazade+New:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    font-family: "Segoe UI", Roboto, sans-serif;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+    color: #1e3d24;
+  }
+
+  a { text-decoration: none; color: inherit; }
+
+  /* ===== HEADER ===== */
+  header.site-header {
+    background: linear-gradient(135deg, #ffffff, #f4fff7);
+    padding: 25px 20px;
+    text-align: center;
+    border-bottom: 1px solid #d8f3dc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  header.site-header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    color: #17653a;
+  }
+
+  header.site-header p {
+    margin: 5px 0 0 0;
+    color: #355e3b;
+    font-size: 1rem;
+    opacity: 0.85;
+  }
+
+  /* ===== FOOTER ===== */
+  footer.site-footer {
+    text-align: center;
+    padding: 25px 10px;
+    background-color: #f9fdf9;
+    color: #2b4d36;
+    font-size: 0.9rem;
+    border-top: 1px solid #e4f5ea;
+  }
+
+  footer.site-footer a {
+    color: #2ca35a;
+    margin: 0 10px;
+    font-weight: 500;
+  }
+
+  footer.site-footer a:hover { text-decoration: underline; }
+
+  /* ===== CONTAINER ===== */
+  .container {
+    max-width: 800px;
+    margin: 30px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    padding: 25px;
+  }
+
+  h2 { text-align: center; color: #00796b; margin-top: 0; }
+  .verse-info { text-align: center; color: #777; margin-bottom: 20px; }
+
+  .arabic-text {
+    font-family: "Scheherazade New", "Amiri", "Traditional Arabic", serif;
+    font-size: 38px;
+    text-align: center;
+    margin: 30px 0;
+    line-height: 2;
+    color: #1a1a1a;
+    direction: rtl;
+    word-spacing: 4px;
+  }
+
+  .section { background: #f9f9f9; border-left: 4px solid; padding: 15px; border-radius: 8px; margin: 15px 0; }
+  .transliteration { border-color: #03A9F4; background-color: #E1F5FE; }
+  .transliteration p { font-style: italic; font-size: 17px; color: #0288d1; text-align: center; margin: 0; }
+  .translation { border-color: #2196F3; background-color: #f1f7ff; }
+  .linguistics { border-color: #9C27B0; background-color: #f8f2fb; }
+  .context { border-color: #FF9800; background-color: #fff6eb; }
+  .reflection { border-color: #4CAF50; background-color: #f2fbf2; }
+  .similar { border-color: #FF5722; background-color: #fff2f0; }
+  .section h3 { margin-top: 0; }
+  .section p { white-space: pre-wrap; }
+
+  .nav-buttons { display: flex; justify-content: space-between; margin-top: 25px; gap: 10px; flex-wrap: wrap; }
+  button { padding: 10px 18px; font-size: 15px; background-color: #00796b; color: white; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+  button:hover { background-color: #005f56; }
+
+  #home-btn {
+    background: linear-gradient(to right, #4CAF50, #81C784);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 600;
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+  }
+  #home-btn:hover {
+    background: linear-gradient(to right, #388E3C, #4CAF50);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+  }
+
+  #prev-btn, #next-btn {
+    background: linear-gradient(to right, #00796b, #009688);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 600;
+    box-shadow: 0 4px 8px rgba(0, 121, 107, 0.3);
+  }
+  #prev-btn:hover, #next-btn:hover {
+    background: linear-gradient(to right, #005f56, #00796b);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 121, 107, 0.4);
+  }
+
+  .similar a {
+    display: inline-block;
+    margin: 5px 8px 5px 0;
+    padding: 5px 10px;
+    background-color: #FF5722;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: 0.3s;
+  }
+  .similar a:hover { background-color: #e64a19; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header" style="padding: 15px 20px;">
+  <h1 style="font-size: 1.5rem; margin: 0; color: #17653a;">Ayah Qur’an Viewer</h1>
+  <p style="font-size: 0.85rem; margin: 5px 0 0 0; color: #355e3b; opacity: 0.85;">
+    Explore verses with reflection, context, and linguistic insight
+  </p>
+</header>
+
+<div class="container">
+  <h2 id="surah-name">Loading...</h2>
+  <div class="verse-info" id="verse-info"></div>
+  <div class="arabic-text" id="arabic-text"></div>
+
+  <div class="section transliteration">
+    <h3>Transliteration</h3>
+    <p id="transliteration"></p>
+  </div>
+
+  <div class="section translation">
+    <h3>English Translation</h3>
+    <p id="translation"></p>
+  </div>
+
+  <div class="section linguistics">
+    <h3>Linguistic Analysis</h3>
+    <p id="linguistic"></p>
+  </div>
+
+  <div class="section context">
+    <h3>Context of Revelation</h3>
+    <p id="context"></p>
+  </div>
+
+  <div class="section reflection">
+    <h3>Reflections</h3>
+    <p id="reflection"></p>
+  </div>
+
+  <div class="section similar">
+    <h3>Similar Verses</h3>
+    <div id="similar-verses"></div>
+  </div>
+
+  <div class="nav-buttons">
+    <button id="prev-btn">‹ Prev</button>
+    <button id="home-btn">🏠 Home</button>
+    <button id="next-btn">Next ›</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <p>Contact us:</p>
+  <p>
+    <a href="https://t.me/yourtelegram" target="_blank">Telegram</a> |
+    <a href="https://wa.me/yourwhatsapp" target="_blank">WhatsApp</a> |
+    <a href="mailto:your@email.com">Email</a>
+  </p>
+  <p>© 2025 Ayah Platform — All Rights Reserved</p>
+</footer>
+
+<script>
+let currentSurah = 1;
+let currentVerse = 1;
+
+// Load verse data
+async function loadVerse(chapter, verse) {
+  try {
+    const response = await fetch(`${chapter}-${verse}.json`);
+    if (!response.ok) throw new Error("Verse not found");
+    const data = await response.json();
+
+    document.getElementById("surah-name").textContent = data["Surah"];
+    document.getElementById("verse-info").textContent = `Verse ${data["Verse"]}`;
+    document.getElementById("arabic-text").textContent = data["Arabic Text"];
+    document.getElementById("transliteration").textContent = data["Transliteration"] || "—";
+    document.getElementById("translation").textContent = data["English Translation"] || "";
+    document.getElementById("linguistic").textContent = data["Linguistic Analysis"] || "";
+    document.getElementById("context").textContent = data["Context of Revelation"] || "";
+    document.getElementById("reflection").textContent = data["Reflections"] || "";
+
+    const parts = data["Verse"].split("-");
+    currentSurah = parseInt(parts[0]);
+    currentVerse = parseInt(parts[1]);
+
+    const similarDiv = document.getElementById("similar-verses");
+    similarDiv.innerHTML = "";
+    if (data["Similar Verses"]) {
+      data["Similar Verses"].forEach(ref => {
+        const a = document.createElement("a");
+        a.href = "#";
+        a.textContent = ref;
+        a.onclick = () => {
+          const [s, v] = ref.split("-").map(Number);
+          loadVerse(s, v);
+        };
+        similarDiv.appendChild(a);
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    alert("This verse could not be loaded.");
+  }
+}
+
+// Navigation buttons
+document.getElementById("prev-btn").onclick = async () => {
+  if (currentVerse > 1) currentVerse--;
+  else if (currentSurah > 1) { currentSurah--; currentVerse = 1; }
+  await loadVerse(currentSurah, currentVerse);
+};
+
+document.getElementById("next-btn").onclick = async () => {
+  try {
+    const res = await fetch(`${currentSurah}-${currentVerse + 1}.json`);
+    if (res.ok) { currentVerse++; }
+    else { currentSurah++; currentVerse = 1; }
+  } catch {}
+  await loadVerse(currentSurah, currentVerse);
+};
+
+document.getElementById("home-btn").onclick = () => loadVerse(1, 1);
+
+// Initial load
+loadVerse(1, 1);
+</script>
+
+</body>
+</html>
