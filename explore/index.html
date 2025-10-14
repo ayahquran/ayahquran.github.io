@@ -12,7 +12,7 @@
 <meta property="og:image" href="https://upload.wikimedia.org/wikipedia/commons/8/87/Ayah.svg">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://ayah.hs.vc/explore">
-  
+
 <!-- Favicon/Icon -->
 <link rel="icon" type="image/png" href="../icon.png">
 
@@ -20,43 +20,43 @@
 <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Scheherazade+New:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-        /* Disable text selection */
-        body {
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-        }
+  /* Disable text selection */
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
 </style>
 
 <script>
-    // Disable Right Click, Copy, Cut, Paste
-    document.addEventListener("contextmenu", e => e.preventDefault());
-    ["copy","cut","paste"].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
+  // Disable Right Click, Copy, Cut, Paste
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  ["copy","cut","paste"].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
 
-    // Block Developer Tools
-    document.addEventListener("keydown", function (e) {
-        if (
-            e.key === "F12" ||
-            (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J")) ||
-            (e.ctrlKey && e.key === "U")
-        ) e.preventDefault();
-    });
+  // Block Developer Tools
+  document.addEventListener("keydown", function (e) {
+      if (
+          e.key === "F12" ||
+          (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J")) ||
+          (e.ctrlKey && e.key === "U")
+      ) e.preventDefault();
+  });
 
-    (function detectDevTools() {
-        setInterval(() => {
-            if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) {
-                console.clear();
-                alert("Developer tools detected! Please close them.");
-                window.location.reload();
-            }
-        }, 1000);
-    })();
+  (function detectDevTools() {
+      setInterval(() => {
+          if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) {
+              console.clear();
+              alert("Developer tools detected! Please close them.");
+              window.location.reload();
+          }
+      }, 1000);
+  })();
 
-    function blockDebugger() {
-        setInterval(() => { debugger; }, 50);
-    }
-    blockDebugger();
+  function blockDebugger() {
+      setInterval(() => { debugger; }, 50);
+  }
+  blockDebugger();
 </script>
 
 <style>
@@ -133,12 +133,12 @@
 
   .section { background: #f9f9f9; border-left: 4px solid; padding: 15px; border-radius: 8px; margin: 15px 0; }
   .transliteration { border-color: #03A9F4; background-color: #E1F5FE; }
-  .transliteration p { font-style: italic; font-size: 17px; color: #0288d1; text-align: center; margin: 0; }
   .translation { border-color: #2196F3; background-color: #f1f7ff; }
   .linguistics { border-color: #9C27B0; background-color: #f8f2fb; }
   .context { border-color: #FF9800; background-color: #fff6eb; }
   .reflection { border-color: #4CAF50; background-color: #f2fbf2; }
   .similar { border-color: #FF5722; background-color: #fff2f0; }
+
   .section h3 { margin-top: 0; }
   .section p { white-space: pre-wrap; }
 
@@ -184,7 +184,6 @@
   }
   .similar a:hover { background-color: #e64a19; }
 
-  /* Go To Inputs */
   .goto-verse {
     display: flex;
     justify-content: center;
@@ -260,13 +259,11 @@
     <button id="next-btn">Next ›</button>
   </div>
 
-  <!-- Go To Verse -->
   <div class="goto-verse">
     <input type="number" id="surah-input" placeholder="Surah #" min="1">
     <input type="number" id="verse-input" placeholder="Verse #" min="1">
     <button id="goto-btn">Go To</button>
   </div>
-
 </div>
 
 <footer class="site-footer">
@@ -282,8 +279,7 @@
 let currentSurah = 1;
 let currentVerse = 1;
 
-// Load verse data
-async function loadVerse(chapter, verse) {
+async function loadVerse(chapter, verse, pushState = false) {
   try {
     const response = await fetch(`${chapter}-${verse}.json`);
     if (!response.ok) throw new Error("Verse not found");
@@ -302,16 +298,22 @@ async function loadVerse(chapter, verse) {
     currentSurah = parseInt(parts[0]);
     currentVerse = parseInt(parts[1]);
 
+    // Update URL only if from similar verse click
+    if (pushState) {
+      history.pushState({ surah: currentSurah, verse: currentVerse }, "", `?surah=${currentSurah}&verse=${currentVerse}`);
+    }
+
     const similarDiv = document.getElementById("similar-verses");
     similarDiv.innerHTML = "";
     if (data["Similar Verses"]) {
       data["Similar Verses"].forEach(ref => {
         const a = document.createElement("a");
-        a.href = "#";
+        a.href = `?surah=${ref.split("-")[0]}&verse=${ref.split("-")[1]}`;
         a.textContent = ref;
-        a.onclick = () => {
+        a.onclick = (e) => {
+          e.preventDefault();
           const [s, v] = ref.split("-").map(Number);
-          loadVerse(s, v);
+          loadVerse(s, v, true);
         };
         similarDiv.appendChild(a);
       });
@@ -322,11 +324,18 @@ async function loadVerse(chapter, verse) {
   }
 }
 
+// Handle Back/Forward navigation
+window.onpopstate = (event) => {
+  if (event.state) {
+    loadVerse(event.state.surah, event.state.verse, false);
+  }
+};
+
 // Navigation buttons
 document.getElementById("prev-btn").onclick = async () => {
   if (currentVerse > 1) currentVerse--;
   else if (currentSurah > 1) { currentSurah--; currentVerse = 1; }
-  await loadVerse(currentSurah, currentVerse);
+  await loadVerse(currentSurah, currentVerse, false);
 };
 
 document.getElementById("next-btn").onclick = async () => {
@@ -335,21 +344,28 @@ document.getElementById("next-btn").onclick = async () => {
     if (res.ok) { currentVerse++; }
     else { currentSurah++; currentVerse = 1; }
   } catch {}
-  await loadVerse(currentSurah, currentVerse);
+  await loadVerse(currentSurah, currentVerse, false);
 };
 
-document.getElementById("home-btn").onclick = () => loadVerse(1, 1);
+document.getElementById("home-btn").onclick = () => loadVerse(1, 1, false);
 
 // Go To verse button
 document.getElementById("goto-btn").onclick = () => {
   const s = parseInt(document.getElementById("surah-input").value);
   const v = parseInt(document.getElementById("verse-input").value);
-  if (!isNaN(s) && !isNaN(v)) loadVerse(s, v);
+  if (!isNaN(s) && !isNaN(v)) loadVerse(s, v, true);
   else alert("Please enter valid Surah and Verse numbers.");
 };
 
-// Initial load
-loadVerse(1, 1);
+// Load from URL if available
+const urlParams = new URLSearchParams(window.location.search);
+const surahParam = parseInt(urlParams.get("surah"));
+const verseParam = parseInt(urlParams.get("verse"));
+if (!isNaN(surahParam) && !isNaN(verseParam)) {
+  loadVerse(surahParam, verseParam, false);
+} else {
+  loadVerse(1, 1, false);
+}
 </script>
 
 </body>
