@@ -9,7 +9,7 @@
 <meta name="robots" content="index, follow">
 <meta property="og:title" content="Explore Quran in a way you always yearned for">
 <meta property="og:description" content="Dive into each ayat of Quran as never before.">
-<meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/8/87/Ayah.svg">
+<meta property="og:image" content="icon.png">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://ayah.hs.vc/explore">
 
@@ -279,7 +279,13 @@
 let currentSurah = 1;
 let currentVerse = 1;
 
-async function loadVerse(chapter, verse, pushState = false) {
+// Function to update the URL based on currentSurah and currentVerse
+function updateUrl() {
+  // This should only be called *after* currentSurah and currentVerse are set correctly
+  history.pushState({ surah: currentSurah, verse: currentVerse }, "", `?surah=${currentSurah}&verse=${currentVerse}`);
+}
+
+async function loadVerse(chapter, verse, updateHistory = true) {
   try {
     const response = await fetch(`${chapter}-${verse}.json`);
     if (!response.ok) throw new Error("Verse not found");
@@ -294,13 +300,14 @@ async function loadVerse(chapter, verse, pushState = false) {
     document.getElementById("context").textContent = data["Context of Revelation"] || "";
     document.getElementById("reflection").textContent = data["Reflections"] || "";
 
+    // IMPORTANT: Update currentSurah and currentVerse *before* updating the URL
     const parts = data["Verse"].split("-");
     currentSurah = parseInt(parts[0]);
     currentVerse = parseInt(parts[1]);
 
-    // Update URL only if from similar verse click or goto
-    if (pushState) {
-      history.pushState({ surah: currentSurah, verse: currentVerse }, "", `?surah=${currentSurah}&verse=${currentVerse}`);
+    // Update URL *after* currentSurah and currentVerse are set, if requested
+    if (updateHistory) {
+      updateUrl(); // This function uses the updated currentSurah and currentVerse
     }
 
     const similarDiv = document.getElementById("similar-verses");
@@ -313,6 +320,7 @@ async function loadVerse(chapter, verse, pushState = false) {
         a.onclick = (e) => {
           e.preventDefault();
           const [s, v] = ref.split("-").map(Number);
+          // Load the verse and update history for similar verse clicks
           loadVerse(s, v, true);
         };
         similarDiv.appendChild(a);
@@ -320,57 +328,96 @@ async function loadVerse(chapter, verse, pushState = false) {
     }
   } catch (err) {
     console.error(err);
-    alert("This verse could not be loaded.");
+    alert(`Failed to load verse ${chapter}:${verse}. Error: ${err.message}`);
+    // Optionally, revert URL if load failed and history was updated
+    // if (updateHistory) {
+    //    history.pushState({ surah: currentSurah, verse: currentVerse }, "", `?surah=${currentSurah}&verse=${currentVerse}`);
+    // }
   }
 }
 
 // Handle Back/Forward navigation
 window.onpopstate = (event) => {
-  if (event.state) {
+  console.log("popstate event fired. State:", event.state); // Debug log
+  if (event.state && event.state.surah !== undefined && event.state.verse !== undefined) {
+    // When back/forward is pressed, load the verse from the state object pushed by pushState
+    // Do not push a new state here (updateHistory = false)
     loadVerse(event.state.surah, event.state.verse, false);
+  } else {
+      // If state is null or incomplete (e.g., going back to a page without state pushed by our script),
+      // you might want to reload based on the current URL parameters or load a default.
+      // Fallback: try to parse the current URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const surahParam = parseInt(urlParams.get("surah"));
+      const verseParam = parseInt(urlParams.get("verse"));
+      if (!isNaN(surahParam) && !isNaN(verseParam)) {
+          loadVerse(surahParam, verseParam, false); // Load based on URL, don't push state
+      } else {
+          loadVerse(1, 1, false); // Default fallback, don't push state
+      }
   }
 };
 
-// Navigation buttons
+// Navigation buttons - Always update history when these are clicked
 document.getElementById("prev-btn").onclick = async () => {
   if (currentVerse > 1) currentVerse--;
   else if (currentSurah > 1) { currentSurah--; currentVerse = 1; }
-  await loadVerse(currentSurah, currentVerse, false);
+  await loadVerse(currentSurah, currentVerse, true); // Update history
 };
 
 document.getElementById("next-btn").onclick = async () => {
+  let nextSurah = currentSurah;
+  let nextVerse = currentVerse + 1;
   try {
-    const res = await fetch(`${currentSurah}-${currentVerse + 1}.json`);
-    if (res.ok) { currentVerse++; }
-    else { currentSurah++; currentVerse = 1; }
-  } catch {}
-  await loadVerse(currentSurah, currentVerse, false);
+    const res = await fetch(`${nextSurah}-${nextVerse}.json`);
+    if (!res.ok) {
+         // If next verse doesn't exist in current surah, go to first verse of next surah
+         nextSurah++;
+         nextVerse = 1;
+         // Optional: Check if nextSurah itself is valid (e.g., <= 114)
+         // if (nextSurah > 114) { /* handle end of Quran */ }
+    }
+  } catch {
+      // If fetch fails, assume we need to go to next surah
+      nextSurah++;
+      nextVerse = 1;
+      // Optional: Check if nextSurah itself is valid (e.g., <= 114)
+      // if (nextSurah > 114) { /* handle end of Quran */ }
+  }
+  // Update state variables before calling loadVerse
+  currentSurah = nextSurah;
+  currentVerse = nextVerse;
+  await loadVerse(currentSurah, currentVerse, true); // Update history
 };
 
-document.getElementById("home-btn").onclick = () => loadVerse(1, 1, false);
+document.getElementById("home-btn").onclick = () => {
+    loadVerse(1, 1, true); // Update history
+};
 
-// Go To verse button - FIXED: Read values immediately and validate
+// Go To verse button - FIXED: Read values, call loadVerse which updates state and optionally URL
 document.getElementById("goto-btn").onclick = () => {
-  // Read the values *before* any potential navigation or state changes
   const s = parseInt(document.getElementById("surah-input").value);
   const v = parseInt(document.getElementById("verse-input").value);
 
-  // Check if both values are valid positive numbers
-  if (!isNaN(s) && !isNaN(v) && s > 0 && v > 0) {
-    loadVerse(s, v, true); // Use the read values 's' and 'v'
+  if (!isNaN(s) && !isNaN(v) && s > 0 && v > 0) { // Validate positive numbers
+    // Calling loadVerse with 'true' will load the data, update currentSurah/currentVerse,
+    // and then call updateUrl() to change the address bar
+    loadVerse(s, v, true); // This should update content AND URL
   } else {
     alert("Please enter valid positive Surah and Verse numbers.");
   }
 };
 
-// Load from URL if available
+// Load from URL if available on initial page load
 const urlParams = new URLSearchParams(window.location.search);
 const surahParam = parseInt(urlParams.get("surah"));
 const verseParam = parseInt(urlParams.get("verse"));
 if (!isNaN(surahParam) && !isNaN(verseParam)) {
-  loadVerse(surahParam, verseParam, false);
+  // Load the initial verse from URL params.
+  // Using 'true' here ensures the loaded state is the initial history entry.
+  loadVerse(surahParam, verseParam, true); // Update history on initial load if params exist
 } else {
-  loadVerse(1, 1, false);
+  loadVerse(1, 1, true); // Update history for default load
 }
 </script>
 
