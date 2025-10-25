@@ -9,7 +9,7 @@
 <meta name="robots" content="index, follow">
 <meta property="og:title" content="Explore Quran in a way you always yearned for">
 <meta property="og:description" content="Dive into each ayat of Quran as never before.">
-<meta property="og:image" href="https://upload.wikimedia.org/wikipedia/commons/8/87/Ayah.svg">
+<meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/8/87/Ayah.svg">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://ayah.hs.vc/explore">
 
@@ -298,7 +298,7 @@ async function loadVerse(chapter, verse, pushState = false) {
     currentSurah = parseInt(parts[0]);
     currentVerse = parseInt(parts[1]);
 
-    // Update URL only if from similar verse click
+    // Update URL only if from similar verse click or goto
     if (pushState) {
       history.pushState({ surah: currentSurah, verse: currentVerse }, "", `?surah=${currentSurah}&verse=${currentVerse}`);
     }
@@ -349,12 +349,18 @@ document.getElementById("next-btn").onclick = async () => {
 
 document.getElementById("home-btn").onclick = () => loadVerse(1, 1, false);
 
-// Go To verse button
+// Go To verse button - FIXED: Read values immediately and validate
 document.getElementById("goto-btn").onclick = () => {
+  // Read the values *before* any potential navigation or state changes
   const s = parseInt(document.getElementById("surah-input").value);
   const v = parseInt(document.getElementById("verse-input").value);
-  if (!isNaN(s) && !isNaN(v)) loadVerse(s, v, true);
-  else alert("Please enter valid Surah and Verse numbers.");
+
+  // Check if both values are valid positive numbers
+  if (!isNaN(s) && !isNaN(v) && s > 0 && v > 0) {
+    loadVerse(s, v, true); // Use the read values 's' and 'v'
+  } else {
+    alert("Please enter valid positive Surah and Verse numbers.");
+  }
 };
 
 // Load from URL if available
