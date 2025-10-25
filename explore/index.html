@@ -11,7 +11,7 @@
 <meta property="og:description" content="Dive into each ayat of Quran as never before.">
 <meta property="og:image" content="icon.png">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://ayah.hs.vc/explore">
+<meta property="og:url" content="https://ayah.hs.vc/explore  ">
 
 <!-- Favicon/Icon -->
 <link rel="icon" type="image/png" href="../icon.png">
@@ -269,7 +269,7 @@
 <footer class="site-footer">
   <p>Contact us:</p>
   <p>
-    <a href="https://t.me/zimaamzayn" target="_blank">Telegram</a> |
+    <a href="  https://t.me/zimaamzayn  " target="_blank">Telegram</a> |
     <a href="mailto:zayn123@duck.com">Email</a>
   </p>
   <p>© 2025 Ayah Platform — All Rights Reserved</p>
@@ -301,9 +301,17 @@ async function loadVerse(chapter, verse, updateHistory = true) {
     document.getElementById("reflection").textContent = data["Reflections"] || "";
 
     // IMPORTANT: Update currentSurah and currentVerse *before* updating the URL
+    // Parse the verse identifier from the loaded data to confirm currentSurah/currentVerse
+    // This assumes the format in data["Verse"] is like "SurahNumber-VerseNumber"
     const parts = data["Verse"].split("-");
-    currentSurah = parseInt(parts[0]);
-    currentVerse = parseInt(parts[1]);
+    if (parts.length === 2) {
+        currentSurah = parseInt(parts[0]);
+        currentVerse = parseInt(parts[1]);
+    } else {
+        // Handle unexpected format if necessary, perhaps fallback to chapter/verse passed in
+        currentSurah = parseInt(chapter);
+        currentVerse = parseInt(verse);
+    }
 
     // Update URL *after* currentSurah and currentVerse are set, if requested
     if (updateHistory) {
@@ -394,18 +402,26 @@ document.getElementById("home-btn").onclick = () => {
     loadVerse(1, 1, true); // Update history
 };
 
-// Go To verse button - FIXED: Read values, call loadVerse which updates state and optionally URL
+// Go To verse button - FIXED
 document.getElementById("goto-btn").onclick = () => {
-  const s = parseInt(document.getElementById("surah-input").value);
-  const v = parseInt(document.getElementById("verse-input").value);
+  const sInput = document.getElementById("surah-input").value;
+  const vInput = document.getElementById("verse-input").value;
 
-  if (!isNaN(s) && !isNaN(v) && s > 0 && v > 0) { // Validate positive numbers
-    // Calling loadVerse with 'true' will load the data, update currentSurah/currentVerse,
-    // and then call updateUrl() to change the address bar
-    loadVerse(s, v, true); // This should update content AND URL
-  } else {
+  const s = parseInt(sInput, 10); // Explicitly specify base 10
+  const v = parseInt(vInput, 10);
+
+  // Validate inputs: check if they are numbers and positive
+  if (isNaN(s) || isNaN(v) || s <= 0 || v <= 0) {
     alert("Please enter valid positive Surah and Verse numbers.");
+    return; // Stop execution if invalid
   }
+
+  // Update the global state variables BEFORE calling loadVerse
+  currentSurah = s;
+  currentVerse = v;
+
+  // Call loadVerse with the input values and update history
+  loadVerse(s, v, true); // This should update content AND URL correctly now
 };
 
 // Load from URL if available on initial page load
